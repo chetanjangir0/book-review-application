@@ -15,7 +15,7 @@ app.use("/customer/auth/*", function auth(req,res,next){
     res.status(403).json({message: "user not authenticated"});
   }
 
-  cont token = req.session.authorization["accessToken"];
+  const token = req.session.authorization["accessToken"];
   jwt.verify(token, "access", (err, usr) => {
     if (!err) {
       req.user = usr;
@@ -23,6 +23,7 @@ app.use("/customer/auth/*", function auth(req,res,next){
     } else {
       res.status(403).json({message: "user not authenticated"});
     }
+  }) 
 });
  
 const PORT =5000;
