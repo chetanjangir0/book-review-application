@@ -4,6 +4,26 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
+const getBooksAsync = ()=> {
+  return new Promise((resolve, reject) => {
+    try {
+      resolve(books);
+    } catch(err) {
+      reject("could not fetch books");
+    }
+  });
+};
+
+// Get the book list available in the shop
+public_users.get('/', async function (req, res) {
+  try {
+    let bookList = await getBooksAsync();
+    return res.status(200).json(bookList);
+  } catch(err) {
+    return res.status(500).json({message: err});
+  }
+});
+
 public_users.post("/register", (req,res) => {
   username = req.body.username;
   password = req.body.password;
@@ -15,11 +35,6 @@ public_users.post("/register", (req,res) => {
   }
   users.push({username, password});
   return res.status(200).json({message: "user successful registered"});
-});
-
-// Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  return res.json(books);
 });
 
 // Get book details based on ISBN
