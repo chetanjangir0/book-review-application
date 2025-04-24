@@ -4,25 +4,6 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
-const getBooksAsync = ()=> {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(books);
-    } catch(err) {
-      reject("could not fetch books");
-    }
-  });
-};
-
-// Get the book list available in the shop
-public_users.get('/', async function (req, res) {
-  try {
-    let bookList = await getBooksAsync();
-    return res.status(200).json(bookList);
-  } catch(err) {
-    return res.status(500).json({message: err});
-  }
-});
 
 public_users.post("/register", (req,res) => {
   username = req.body.username;
@@ -37,35 +18,101 @@ public_users.post("/register", (req,res) => {
   return res.status(200).json({message: "user successful registered"});
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-  const isbn = req.params.isbn;
-  if (isbn in books) {
-    return res.json(books[isbn])
+// Get the book list available in the shop
+public_users.get('/', async function (req, res) {
+  try {
+    const bookList = await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(books);
+      }, 500);
+    });
+
+    return res.status(200).json(bookList);
+  } catch(err) {
+    return res.status(500).json({message: err});
   }
-  return res.status(404).json({message: "book not found"});
- });
-  
-// Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  const author = req.params.author;
-  for (let isbn in books) {
-    if (author === books[isbn].author) {
-      return res.json(books[isbn]);
-    }
-  }
-  return res.status(404).json({message: "author not found"});
 });
 
-// Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  const title = req.params.title;
-  for (let isbn in books) {
-    if (title === books[isbn].title) {
-      return res.json(books[isbn]);
-    }
+const getBookByIsbn = (isbn) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (isbn in books) {
+        resolve(books[isbn]);
+      } else {
+        reject("book not found");
+      }
+    }, 500);
+  });
+};
+
+// Get book details based on ISBN
+public_users.get('/isbn/:isbn',async function (req, res) {
+  const isbn = req.params.isbn;
+  try {
+    const book = await getBookByIsbn(isbn);
+    return res.status(200).json(book);
+  } catch(err) {
+    return res.status(404).json({message: err});
   }
-  return res.status(404).json({message: "title not found"});
+});
+ 
+
+const getBooksByAuthor = (author)=> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      let matchingBooks = []
+      for (let isbn in books) {
+        if (books[isbn].author == author) {
+          matchingBooks.push(books[isbn]);
+        }
+      }
+      if (matchingBooks.length == 0) {
+        reject("Books by this author not found");
+      } else {
+        resolve(matchingBooks);
+      }
+    });
+  });
+}
+
+// Get book details based on author
+public_users.get('/author/:author',async function (req, res) {
+  const author = req.params.author;
+  try {
+    const bookList = await getBooksByAuthor(author);
+    return res.status(200).json(bookList);
+  } catch(err) {
+    return res.status(404).json({message: err});
+  }
+});
+
+const getBooksByTitle = (title)=> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      let matchingBooks = []
+      for (let isbn in books) {
+        if (books[isbn].title == title) {
+          matchingBooks.push(books[isbn]);
+        }
+      }
+      if (matchingBooks.length == 0) {
+        reject("Books by this author not found");
+      } else {
+        resolve(matchingBooks);
+      }
+    });
+  });
+}
+
+// Get all books based on title
+public_users.get('/title/:title',async function (req, res) {
+  const title = req.params.title;
+  try {
+    const booksList = await getBooksByTitle(title);
+    return res.status(200).json(booksList);
+  } catch(err) {
+    return res.status(404).json({message: err});
+  }
 });
 
 //  Get book review
